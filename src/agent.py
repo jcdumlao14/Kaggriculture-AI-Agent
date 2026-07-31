@@ -21,6 +21,7 @@ from src.market import Market
 from src.economy import Economy
 from src.state import StateManager
 from src.actions import ActionBuilder
+from src.scoring import CropScorer
 
 
 class KaggricultureAgent:
@@ -91,6 +92,9 @@ class KaggricultureAgent:
 
         # Market state
         self.market = Market(self.parser)
+
+        # Crop Scorer
+        self.scorer = CropScorer(self.parser)
 
         # Economy
         if hasattr(self.parser, "money"):
