@@ -5,8 +5,8 @@ High-level task planner for the Kaggriculture AI Agent.
 
 The planner decides WHAT should happen next.
 
-It does not worry about pathfinding or market optimization.
-Those modules are handled separately.
+It does not worry about movement, pathfinding,
+or market optimization.
 """
 
 from __future__ import annotations
@@ -18,11 +18,11 @@ class Planner:
     """
     High-level planner.
 
-    Determines the next task based on the current game state.
+    Generates a prioritized list of tasks based on
+    the current world state.
     """
 
     def __init__(self, parser, world):
-
         self.parser = parser
         self.world = world
 
@@ -32,76 +32,105 @@ class Planner:
 
     def plan(self):
         """
-        Returns the highest priority task.
+        Generate all available tasks.
+
+        Returns
+        -------
+        list
+            List of task dictionaries sorted later
+            by the Scheduler.
         """
 
-        # 1. Harvest crops
-
-        crops = self.world.harvestable_plants()
-
-        if crops:
-            return {
-                "task": "HARVEST",
-                "target": crops[0],
-            }
+        tasks = []
 
         # -----------------------------------------------------
+        # Harvest mature crops (Highest Priority)
+        # -----------------------------------------------------
 
-        # 2. Water crops
+        for target in self.world.harvestable_plants():
+            tasks.append(
+                {
+                    "priority": 1,
+                    "task": Action.HARVEST.value,
+                    "target": target,
+                }
+            )
+
+        # -----------------------------------------------------
+        # Water crops
+        # -----------------------------------------------------
 
         for x, y, tile in self.world.plants():
 
             if not tile.get("watered_today", False):
 
-                return {
-                    "task": "WATER",
-                    "target": (x, y),
-                }
+                tasks.append(
+                    {
+                        "priority": 2,
+                        "task": Action.WATER.value,
+                        "target": (x, y),
+                    }
+                )
 
         # -----------------------------------------------------
-
-        # 3. Feed animals
+        # Feed animals
+        # -----------------------------------------------------
 
         for x, y, tile in self.world.animals():
 
             if not tile.get("fed_today", False):
 
-                return {
-                    "task": "FEED",
-                    "target": (x, y),
-                }
+                tasks.append(
+                    {
+                        "priority": 3,
+                        "task": Action.FEED.value,
+                        "target": (x, y),
+                    }
+                )
 
         # -----------------------------------------------------
-
-        # 4. Collect fertilizer
+        # Collect fertilizer
+        # -----------------------------------------------------
 
         for x, y, tile in self.world.animals():
 
             if tile.get("fertilizer_available", False):
 
-                return {
-                    "task": "COLLECT_FERTILIZER",
-                    "target": (x, y),
+                tasks.append(
+                    {
+                        "priority": 4,
+                        "task": Action.COLLECT_FERTILIZER.value,
+                        "target": (x, y),
+                    }
+                )
+
+        # -----------------------------------------------------
+        # Plant empty tiles
+        # -----------------------------------------------------
+
+        for target in self.world.empty_tiles():
+
+            tasks.append(
+                {
+                    "priority": 5,
+                    "task": Action.PLANT.value,
+                    "target": target,
                 }
+            )
 
         # -----------------------------------------------------
-
-        # 5. Plant
-
-        empty = self.world.empty_tiles()
-
-        if empty:
-
-            return {
-                "task": "PLANT",
-                "target": empty[0],
-            }
-
-        # -----------------------------------------------------
-
         # Nothing to do
+        # -----------------------------------------------------
 
-        return {
-            "task": Action.PASS,
-            "target": None,
-        }
+        if not tasks:
+
+            tasks.append(
+                {
+                    "priority": 999,
+                    "task": Action.PASS.value,
+                    "target": None,
+                }
+            )
+
+        return tasks
+    
