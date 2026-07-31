@@ -3,8 +3,8 @@ agent.py
 
 Main AI Agent for Kaggriculture.
 
-Coordinates all AI modules and returns the next
-high-level action for the current turn.
+Coordinates all AI modules and returns valid
+Kaggle actions for the current turn.
 
 Author: Jocelyn Dumlao
 Project: Kaggriculture-AI-Agent
@@ -20,13 +20,15 @@ from src.scheduler import Scheduler
 from src.market import Market
 from src.economy import Economy
 from src.state import StateManager
+from src.actions import ActionBuilder
 
 
 class KaggricultureAgent:
     """
     Main AI Agent.
 
-    This class coordinates every subsystem:
+    Pipeline:
+
         Observation
             ↓
         Parser
@@ -45,25 +47,30 @@ class KaggricultureAgent:
             ↓
         Scheduler
             ↓
-        Selected Action
+        Action Builder
+            ↓
+        Kaggle Action
     """
 
     def __init__(self):
         """Initialize all AI modules."""
 
-        # Persistent state
+        # Persistent memory
         self.state = StateManager()
 
-        # Dynamic modules (updated every turn)
+        # Updated every turn
         self.parser = None
         self.world = None
         self.market = None
         self.strategy = None
         self.planner = None
 
-        # Static modules
+        # Long-lived modules
         self.scheduler = Scheduler()
         self.economy = Economy()
+
+        # Converts planner output into Kaggle actions
+        self.actions = ActionBuilder()
 
     # ---------------------------------------------------------
     # Update Environment
@@ -71,7 +78,7 @@ class KaggricultureAgent:
 
     def update(self, observation):
         """
-        Parse the latest observation and update every module.
+        Parse the latest observation and update all modules.
         """
 
         self.parser = ObservationParser(observation)
@@ -79,13 +86,15 @@ class KaggricultureAgent:
         # Update persistent memory
         self.state.update(self.parser)
 
-        # Rebuild world representation
+        # Current world representation
         self.world = World(self.parser)
 
-        # Market analysis
+        # Market state
         self.market = Market(self.parser)
 
-        self.economy.update(self.parser.money)
+        # Economy
+        if hasattr(self.parser, "money"):
+            self.economy.update(self.parser.money)
 
         # High-level strategy
         self.strategy = Strategy(self.parser)
@@ -102,29 +111,26 @@ class KaggricultureAgent:
 
     def think(self):
         """
-        Generate tasks and allow the scheduler
-        to choose the highest priority task.
+        Generate candidate tasks and select
+        the highest-priority one.
         """
 
-        # Reset scheduler
         self.scheduler.clear()
 
-        # Planner generates all tasks
         tasks = self.planner.plan()
 
-        # Add tasks into scheduler
         for task in tasks:
+
             self.scheduler.add(
                 priority=task["priority"],
                 action=task["task"],
                 target=task["target"],
             )
 
-        # Select highest priority task
         decision = self.scheduler.next()
 
-        # Nothing to do
         if decision is None:
+
             return {
                 "task": "PASS",
                 "target": None,
@@ -151,9 +157,14 @@ class KaggricultureAgent:
         Returns
         -------
         dict
-            High-level task selected by the AI.
+            Kaggle-compatible action dictionary.
         """
 
+        # Update world
         self.update(observation)
 
-        return self.think()
+        # AI decides the next task
+        task = self.think()
+
+        # Convert task into Kaggle action
+        return self.actions.build(task)
