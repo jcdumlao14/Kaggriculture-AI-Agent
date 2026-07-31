@@ -85,6 +85,8 @@ class KaggricultureAgent:
         # Market analysis
         self.market = Market(self.parser)
 
+        self.economy.update(self.parser.money)
+
         # High-level strategy
         self.strategy = Strategy(self.parser)
 
