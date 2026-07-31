@@ -1,0 +1,6 @@
+player = obs["player"]
+farm = obs["farms"][player]
+money = farm["money"]
+market = obs["market"]
+day = obs["day"]
+hour = obs["hour"]
