@@ -21,6 +21,7 @@ from src.market import Market
 from src.economy import Economy
 from src.state import StateManager
 from src.actions import ActionBuilder
+from src.pathfinding import PathFinder
 
 
 class KaggricultureAgent:
@@ -88,6 +89,9 @@ class KaggricultureAgent:
         # Build world model
         self.world = World(self.parser)
 
+        # Path finder
+        self.pathfinder = PathFinder(self.parser)
+
         # Market analysis
         self.market = Market(self.parser)
 
@@ -141,7 +145,26 @@ class KaggricultureAgent:
                 "product": None,
                 "amount": None,
             }
+        farmer = self.parser.farmer
 
+        if (
+            decision.target is not None
+            and farmer != decision.target
+        ):
+            move = self.pathfinder.next_move(
+                farmer,
+                decision.target,
+            )
+
+            if move is not None:
+                return {
+                    "task": move,
+                    "target": None,
+                    "crop": None,
+                    "product": None,
+                    "amount": None,
+                }
+    
         return {
             "task": decision.action,
             "target": decision.target,

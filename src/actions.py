@@ -14,8 +14,16 @@ from src.constants import Action
 
 class ActionBuilder:
     """
-    Builds Kaggle-compatible action dictionaries.
+    Convert planner tasks into Kaggle-compatible actions.
     """
+
+    # Valid movement commands
+    MOVES = {
+        Action.NORTH.value,
+        Action.SOUTH.value,
+        Action.EAST.value,
+        Action.WEST.value,
+    }
 
     def __init__(self):
         pass
@@ -24,58 +32,185 @@ class ActionBuilder:
     # Main Builder
     # ---------------------------------------------------------
 
-    def build(self, task):
+    def build(self, task: dict | None) -> dict:
+        """
+        Convert a planner task into the action dictionary
+        expected by Kaggle.
+        """
 
         if task is None:
-
             return self.pass_turn()
 
         action = task.get("task")
 
-        # ---------------- Farmer ----------------
+        # =====================================================
+        # Movement
+        # =====================================================
+
+        if action in self.MOVES:
+
+            return {
+                "farmer": [action],
+                "hands": [],
+                "market": [],
+            }
+
+        # =====================================================
+        # Pass
+        # =====================================================
 
         if action == Action.PASS.value:
-            farmer = ["PASS"]
 
-        elif action == Action.WATER.value:
-            farmer = ["WATER"]
+            return {
+                "farmer": ["PASS"],
+                "hands": [],
+                "market": [],
+            }
 
-        elif action == Action.HARVEST.value:
-            farmer = ["HARVEST"]
+        # =====================================================
+        # Water
+        # =====================================================
 
-        elif action == Action.FEED.value:
-            farmer = ["FEED"]
+        if action == Action.WATER.value:
 
-        elif action == Action.CARE.value:
-            farmer = ["CARE"]
+            return {
+                "farmer": ["WATER"],
+                "hands": [],
+                "market": [],
+            }
 
-        elif action == Action.FERTILIZE.value:
-            farmer = ["FERTILIZE"]
+        # =====================================================
+        # Harvest
+        # =====================================================
 
-        elif action == Action.COLLECT_FERTILIZER.value:
-            farmer = ["COLLECT_FERTILIZER"]
+        if action == Action.HARVEST.value:
 
-        elif action == Action.DIG.value:
-            farmer = ["DIG"]
+            return {
+                "farmer": ["HARVEST"],
+                "hands": [],
+                "market": [],
+            }
 
-        elif action == Action.PLANT.value:
+        # =====================================================
+        # Feed Animal
+        # =====================================================
 
-            # Default crop for Version 1
-            farmer = ["PLANT", "WHEAT"]
+        if action == Action.FEED.value:
 
-        else:
+            return {
+                "farmer": ["FEED"],
+                "hands": [],
+                "market": [],
+            }
 
-            farmer = ["PASS"]
+        # =====================================================
+        # Care Animal
+        # =====================================================
 
-        return {
-            "farmer": farmer,
-            "hands": [],
-            "market": [],
-        }
+        if action == Action.CARE.value:
+
+            return {
+                "farmer": ["CARE"],
+                "hands": [],
+                "market": [],
+            }
+
+        # =====================================================
+        # Fertilize
+        # =====================================================
+
+        if action == Action.FERTILIZE.value:
+
+            return {
+                "farmer": ["FERTILIZE"],
+                "hands": [],
+                "market": [],
+            }
+
+        # =====================================================
+        # Collect Fertilizer
+        # =====================================================
+
+        if action == Action.COLLECT_FERTILIZER.value:
+
+            return {
+                "farmer": ["COLLECT_FERTILIZER"],
+                "hands": [],
+                "market": [],
+            }
+
+        # =====================================================
+        # Dig
+        # =====================================================
+
+        if action == Action.DIG.value:
+
+            return {
+                "farmer": ["DIG"],
+                "hands": [],
+                "market": [],
+            }
+
+        # =====================================================
+        # Plant Crop
+        # =====================================================
+
+        if action == Action.PLANT.value:
+
+            crop = task.get("crop", "WHEAT")
+
+            return {
+                "farmer": ["PLANT", crop],
+                "hands": [],
+                "market": [],
+            }
+
+        # =====================================================
+        # Sell Product
+        # =====================================================
+
+        if action == "SELL":
+
+            return {
+                "farmer": [],
+                "hands": [],
+                "market": [
+                    "SELL",
+                    task["product"],
+                    task["amount"],
+                ],
+            }
+
+        # =====================================================
+        # Buy Product
+        # =====================================================
+
+        if action == "BUY_PRODUCT":
+
+            return {
+                "farmer": [],
+                "hands": [],
+                "market": [
+                    "BUY",
+                    task["product"],
+                    task["amount"],
+                ],
+            }
+
+        # =====================================================
+        # Unknown Action
+        # =====================================================
+
+        return self.pass_turn()
 
     # ---------------------------------------------------------
+    # Pass Turn
+    # ---------------------------------------------------------
 
-    def pass_turn(self):
+    def pass_turn(self) -> dict:
+        """
+        Return a PASS action.
+        """
 
         return {
             "farmer": ["PASS"],
