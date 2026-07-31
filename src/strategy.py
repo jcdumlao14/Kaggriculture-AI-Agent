@@ -1,95 +1,108 @@
 """
 strategy.py
 
-High-level strategic decision making.
+High-level strategy module for the Kaggriculture AI Agent.
 
-The strategy module determines the long-term direction of the AI.
-It does not issue farmer actions directly.
+The Strategy decides the overall objective for the
+current game state. It does not generate actions.
 
-Planner asks Strategy what overall objective to pursue.
+Author: Jocelyn Dumlao
+Project: Kaggriculture-AI-Agent
 """
 
 from __future__ import annotations
 
-from enum import Enum
-
-
-class StrategyMode(str, Enum):
-
-    EARLY_GAME = "EARLY_GAME"
-
-    MID_GAME = "MID_GAME"
-
-    LATE_GAME = "LATE_GAME"
-
-    END_GAME = "END_GAME"
-
 
 class Strategy:
+    """
+    Determines the current high-level farming strategy.
+    """
 
     def __init__(self, parser):
 
         self.parser = parser
 
-    # ---------------------------------------------------------
-    # Determine Season Phase
-    # ---------------------------------------------------------
+        self.day = parser.day
+        self.hour = parser.hour
 
-    @property
-    def mode(self):
-
-        day = self.parser.day
-
-        if day < 6:
-            return StrategyMode.EARLY_GAME
-
-        if day < 15:
-            return StrategyMode.MID_GAME
-
-        if day < 25:
-            return StrategyMode.LATE_GAME
-
-        return StrategyMode.END_GAME
+        self.player = parser.player
+        self.money = parser.money
 
     # ---------------------------------------------------------
-    # Recommended Crop
+    # Current Strategy
     # ---------------------------------------------------------
 
-    def preferred_crop(self):
+    def current_strategy(self):
+        """
+        Return the current strategy.
 
-        mode = self.mode
+        Returns
+        -------
+        str
+        """
 
-        if mode == StrategyMode.EARLY_GAME:
-            return "WHEAT"
+        if self.day < 5:
+            return "EARLY_GAME"
 
-        if mode == StrategyMode.MID_GAME:
-            return "CARROT"
+        if self.day < 15:
+            return "EXPANSION"
 
-        if mode == StrategyMode.LATE_GAME:
-            return "TOMATO"
+        if self.day < 25:
+            return "PRODUCTION"
 
-        return "STRAWBERRY"
+        return "END_GAME"
 
     # ---------------------------------------------------------
-    # Buy Land?
+    # Expansion
     # ---------------------------------------------------------
 
     def should_expand(self):
+        """
+        Decide whether land expansion is worthwhile.
+        """
 
-        return self.parser.money >= 1200
+        return self.money >= 1000
 
     # ---------------------------------------------------------
-    # Hire Workers?
+    # Hiring
     # ---------------------------------------------------------
 
     def should_hire(self):
+        """
+        Decide whether another farm hand should be hired.
+        """
 
-        return self.parser.money >= 2000
+        return self.money >= 1500
 
     # ---------------------------------------------------------
-    # Sell Immediately?
+    # Animals
     # ---------------------------------------------------------
 
-    def sell_now(self):
+    def should_buy_animals(self):
+        """
+        Decide whether to invest in livestock.
+        """
 
-        return self.mode == StrategyMode.END_GAME
+        return self.day >= 10 and self.money >= 500
+
+    # ---------------------------------------------------------
+    # Fertilizer
+    # ---------------------------------------------------------
+
+    def use_fertilizer(self):
+        """
+        Decide whether fertilizer should be used.
+        """
+
+        return self.day >= 8
+
+    # ---------------------------------------------------------
+    # Market
+    # ---------------------------------------------------------
+
+    def sell_aggressively(self):
+        """
+        Sell immediately during the final week.
+        """
+
+        return self.day >= 24
