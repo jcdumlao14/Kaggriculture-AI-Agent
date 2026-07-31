@@ -45,7 +45,7 @@ class Scheduler:
 
     # ------------------------------------------------------
 
-    def add(self, priority, action, target=None, crop=None):
+    def add(self, priority, action, target=None, crop=None, product=None, amount=None,):
         """
         Add a new task to the scheduler.
         """
@@ -55,6 +55,8 @@ class Scheduler:
             action=action,
             target=target,
             crop=crop,
+            product=product,
+            amount=amount,
         )
 
         self.tasks.append(task)

@@ -1,21 +1,22 @@
 """
 market.py
 
-Market Intelligence module for the Kaggriculture AI Agent.
+Market intelligence module.
 
-Analyzes market prices and provides simple trading
-recommendations.
-
-Author: Jocelyn Dumlao
-Project: Kaggriculture-AI-Agent
+Evaluates prices, buying opportunities,
+selling opportunities, and profitability.
 """
 
 from __future__ import annotations
 
+from src.constants import Crop
+
 
 class Market:
     """
-    Market analysis.
+    Handles market analysis.
+
+    Uses current prices from the observation.
     """
 
     def __init__(self, parser):
@@ -24,66 +25,114 @@ class Market:
 
         self.market = parser.market
 
-        self.inventory = self.market.get("inventory", {})
         self.prices = self.market.get("prices", {})
 
-    # ---------------------------------------------------------
-    # Basic Information
-    # ---------------------------------------------------------
+        self.inventory = self.market.get("inventory", {})
 
-    def price(self, product: str) -> int:
-        """
-        Current market price.
-        """
+    # -----------------------------------------------------
+    # Price
+    # -----------------------------------------------------
+
+    def price(self, product):
+
         return self.prices.get(product, 0)
 
-    def inventory_level(self, product: str) -> int:
-        """
-        Current market inventory.
-        """
+    # -----------------------------------------------------
+    # Inventory
+    # -----------------------------------------------------
+
+    def inventory_level(self, product):
+
         return self.inventory.get(product, 0)
 
-    # ---------------------------------------------------------
-    # Price Evaluation
-    # ---------------------------------------------------------
+    # -----------------------------------------------------
+    # Expensive?
+    # -----------------------------------------------------
 
-    def is_expensive(self, product: str, base_price: int) -> bool:
-        """
-        Returns True if price is above its base value.
-        """
-        return self.price(product) > base_price
+    def is_expensive(self, product):
 
-    def is_cheap(self, product: str, base_price: int) -> bool:
-        """
-        Returns True if price is below its base value.
-        """
-        return self.price(product) < base_price
+        base = {
+            "WHEAT": 25,
+            "CARROT": 35,
+            "TOMATO": 60,
+            "STRAWBERRY": 120,
+            "MELON": 250,
+            "EGG": 50,
+            "MILK": 160,
+            "WOOL": 200,
+            "FERTILIZER": 100,
+        }
 
-    # ---------------------------------------------------------
-    # Trading Decisions
-    # ---------------------------------------------------------
+        return self.price(product) > base.get(product, 0)
 
-    def should_sell(self, product: str, base_price: int) -> bool:
-        """
-        Sell when price is favorable.
-        """
-        return self.price(product) >= base_price
+    # -----------------------------------------------------
+    # Cheap?
+    # -----------------------------------------------------
 
-    def should_buy(self, product: str, base_price: int) -> bool:
-        """
-        Buy when price is discounted.
-        """
-        return self.price(product) <= base_price
+    def is_cheap(self, product):
 
-    # ---------------------------------------------------------
+        base = {
+            "WHEAT": 25,
+            "CARROT": 35,
+            "TOMATO": 60,
+            "STRAWBERRY": 120,
+            "MELON": 250,
+            "EGG": 50,
+            "MILK": 160,
+            "WOOL": 200,
+            "FERTILIZER": 100,
+        }
+
+        return self.price(product) < base.get(product, 0)
+
+    # -----------------------------------------------------
+    # Best Crop
+    # -----------------------------------------------------
+
+    def best_crop(self):
+
+        profits = {
+            Crop.WHEAT.value: self.price("WHEAT") - 10,
+            Crop.CARROT.value: self.price("CARROT") - 20,
+            Crop.TOMATO.value: self.price("TOMATO") - 50,
+            Crop.STRAWBERRY.value: self.price("STRAWBERRY") - 100,
+            Crop.MELON.value: self.price("MELON") - 80,
+        }
+
+        return max(profits, key=profits.get)
+
+    # -----------------------------------------------------
+    # Sell?
+    # -----------------------------------------------------
+
+    def should_sell(self, product):
+
+        return self.is_expensive(product)
+
+    # -----------------------------------------------------
+    # Buy Fertilizer?
+    # -----------------------------------------------------
+
+    def should_buy_fertilizer(self):
+
+        return self.is_cheap("FERTILIZER")
+
+    # -----------------------------------------------------
+    # Buy Wheat?
+    # -----------------------------------------------------
+
+    def should_buy_wheat(self):
+
+        return self.is_cheap("WHEAT")
+
+    # -----------------------------------------------------
     # Summary
-    # ---------------------------------------------------------
+    # -----------------------------------------------------
 
     def summary(self):
-        """
-        Return current market snapshot.
-        """
+
         return {
-            "prices": self.prices,
-            "inventory": self.inventory,
+            "best_crop": self.best_crop(),
+            "buy_fertilizer": self.should_buy_fertilizer(),
+            "buy_wheat": self.should_buy_wheat(),
         }

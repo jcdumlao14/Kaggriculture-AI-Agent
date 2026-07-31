@@ -5,28 +5,45 @@ High-level task planner for the Kaggriculture AI Agent.
 
 The planner decides WHAT should happen next.
 
-It does not worry about movement, pathfinding,
-or market optimization.
+It generates a prioritized list of tasks while leaving
+movement, pathfinding, and execution to other modules.
+
+Author: Jocelyn Dumlao
+Project: Kaggriculture-AI-Agent
 """
 
 from __future__ import annotations
 
 from src.constants import Action
-from src.scoring import CropScorer
 
 
 class Planner:
     """
-    High-level planner.
+    High-level Planner.
 
-    Generates a prioritized list of tasks based on
-    the current world state.
+    Responsible for deciding WHAT should be done next.
+
+    It does not decide HOW to reach the target—that is
+    handled by the movement/pathfinding system.
     """
 
-    def __init__(self, parser, world):
+    def __init__(self, parser, world, market):
+        """
+        Parameters
+        ----------
+        parser : ObservationParser
+            Parsed Kaggriculture observation.
+
+        world : World
+            World state helper.
+
+        market : Market
+            Market intelligence module.
+        """
+
         self.parser = parser
         self.world = world
-        self.scorer = CropScorer(parser)
+        self.market = market
 
     # ---------------------------------------------------------
     # Main Planner
@@ -34,22 +51,22 @@ class Planner:
 
     def plan(self):
         """
-        Generate all available tasks.
+        Generate all possible tasks.
 
         Returns
         -------
-        list
-            List of task dictionaries sorted later
-            by the Scheduler.
+        list[dict]
+            List of task dictionaries.
         """
 
         tasks = []
 
-        # -----------------------------------------------------
-        # Harvest mature crops (Highest Priority)
-        # -----------------------------------------------------
+        # =====================================================
+        # 1. Harvest Mature Crops (Highest Priority)
+        # =====================================================
 
         for target in self.world.harvestable_plants():
+
             tasks.append(
                 {
                     "priority": 1,
@@ -58,9 +75,30 @@ class Planner:
                 }
             )
 
-        # -----------------------------------------------------
-        # Water crops
-        # -----------------------------------------------------
+        # =====================================================
+        # 2. Sell Products When Prices Are Good
+        # =====================================================
+
+        for product, amount in self.parser.shed.items():
+
+            if amount <= 0:
+                continue
+
+            if self.market.should_sell(product):
+
+                tasks.append(
+                    {
+                        "priority": 2,
+                        "task": Action.SELL.value,
+                        "product": product,
+                        "amount": amount,
+                        "target": None,
+                    }
+                )
+
+        # =====================================================
+        # 3. Water Plants
+        # =====================================================
 
         for x, y, tile in self.world.plants():
 
@@ -68,15 +106,15 @@ class Planner:
 
                 tasks.append(
                     {
-                        "priority": 2,
+                        "priority": 3,
                         "task": Action.WATER.value,
                         "target": (x, y),
                     }
                 )
 
-        # -----------------------------------------------------
-        # Feed animals
-        # -----------------------------------------------------
+        # =====================================================
+        # 4. Feed Animals
+        # =====================================================
 
         for x, y, tile in self.world.animals():
 
@@ -84,15 +122,15 @@ class Planner:
 
                 tasks.append(
                     {
-                        "priority": 3,
+                        "priority": 4,
                         "task": Action.FEED.value,
                         "target": (x, y),
                     }
                 )
 
-        # -----------------------------------------------------
-        # Collect fertilizer
-        # -----------------------------------------------------
+        # =====================================================
+        # 5. Collect Fertilizer
+        # =====================================================
 
         for x, y, tile in self.world.animals():
 
@@ -100,32 +138,64 @@ class Planner:
 
                 tasks.append(
                     {
-                        "priority": 4,
+                        "priority": 5,
                         "task": Action.COLLECT_FERTILIZER.value,
                         "target": (x, y),
                     }
                 )
 
-        # -----------------------------------------------------
-        # Intelligent Planting Strategy
-        # -----------------------------------------------------
+        # =====================================================
+        # 6. Buy Fertilizer
+        # =====================================================
 
-        best_crop = self.scorer.best_crop()
+        if self.market.should_buy_fertilizer():
+
+            tasks.append(
+                {
+                    "priority": 6,
+                    "task": Action.BUY_PRODUCT.value,
+                    "product": "FERTILIZER",
+                    "amount": 1,
+                    "target": None,
+                }
+            )
+
+        # =====================================================
+        # 7. Buy Wheat
+        # =====================================================
+
+        if self.market.should_buy_wheat():
+
+            tasks.append(
+                {
+                    "priority": 7,
+                    "task": Action.BUY_PRODUCT.value,
+                    "product": "WHEAT",
+                    "amount": 5,
+                    "target": None,
+                }
+            )
+
+        # =====================================================
+        # 8. Plant Best Crop
+        # =====================================================
+
+        best_crop = self.market.best_crop()
 
         for tile in self.world.empty_tiles():
 
             tasks.append(
                 {
-                    "priority": 5,
+                    "priority": 8,
                     "task": Action.PLANT.value,
                     "crop": best_crop,
                     "target": tile,
                 }
             )
 
-        # -----------------------------------------------------
-        # Nothing to do
-        # -----------------------------------------------------
+        # =====================================================
+        # 9. Nothing To Do
+        # =====================================================
 
         if not tasks:
 

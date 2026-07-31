@@ -3,8 +3,8 @@ agent.py
 
 Main AI Agent for Kaggriculture.
 
-Coordinates all AI modules and returns valid
-Kaggle actions for the current turn.
+Coordinates every AI subsystem and returns
+valid Kaggle actions.
 
 Author: Jocelyn Dumlao
 Project: Kaggriculture-AI-Agent
@@ -21,45 +21,44 @@ from src.market import Market
 from src.economy import Economy
 from src.state import StateManager
 from src.actions import ActionBuilder
-from src.scoring import CropScorer
 
 
 class KaggricultureAgent:
     """
-    Main AI Agent.
+    Main Kaggriculture AI Agent.
 
-    Pipeline:
+    Pipeline
 
         Observation
-            ↓
-        Parser
-            ↓
-        World
-            ↓
-        State
-            ↓
-        Economy
-            ↓
-        Market
-            ↓
-        Strategy
-            ↓
-        Planner
-            ↓
-        Scheduler
-            ↓
+              ↓
+           Parser
+              ↓
+            World
+              ↓
+            State
+              ↓
+          Economy
+              ↓
+           Market
+              ↓
+          Strategy
+              ↓
+           Planner
+              ↓
+          Scheduler
+              ↓
         Action Builder
-            ↓
-        Kaggle Action
+              ↓
+        Kaggle Environment
     """
 
     def __init__(self):
-        """Initialize all AI modules."""
+        """Initialize every AI subsystem."""
 
         # Persistent memory
         self.state = StateManager()
 
-        # Updated every turn
+        # Dynamic modules
         self.parser = None
         self.world = None
         self.market = None
@@ -69,8 +68,6 @@ class KaggricultureAgent:
         # Long-lived modules
         self.scheduler = Scheduler()
         self.economy = Economy()
-
-        # Converts planner output into Kaggle actions
         self.actions = ActionBuilder()
 
     # ---------------------------------------------------------
@@ -79,7 +76,8 @@ class KaggricultureAgent:
 
     def update(self, observation):
         """
-        Parse the latest observation and update all modules.
+        Parse the latest observation and
+        update every subsystem.
         """
 
         self.parser = ObservationParser(observation)
@@ -87,16 +85,13 @@ class KaggricultureAgent:
         # Update persistent memory
         self.state.update(self.parser)
 
-        # Current world representation
+        # Build world model
         self.world = World(self.parser)
 
-        # Market state
+        # Market analysis
         self.market = Market(self.parser)
 
-        # Crop Scorer
-        self.scorer = CropScorer(self.parser)
-
-        # Economy
+        # Economy tracking
         if hasattr(self.parser, "money"):
             self.economy.update(self.parser.money)
 
@@ -105,8 +100,9 @@ class KaggricultureAgent:
 
         # Planner
         self.planner = Planner(
-            self.parser,
-            self.world,
+            parser=self.parser,
+            world=self.world,
+            market=self.market,
         )
 
     # ---------------------------------------------------------
@@ -115,8 +111,8 @@ class KaggricultureAgent:
 
     def think(self):
         """
-        Generate candidate tasks and select
-        the highest-priority one.
+        Generate candidate tasks and allow
+        the scheduler to choose the best one.
         """
 
         self.scheduler.clear()
@@ -128,8 +124,10 @@ class KaggricultureAgent:
             self.scheduler.add(
                 priority=task["priority"],
                 action=task["task"],
-                target=task["target"],
+                target=task.get("target"),
                 crop=task.get("crop"),
+                product=task.get("product"),
+                amount=task.get("amount"),
             )
 
         decision = self.scheduler.next()
@@ -139,12 +137,17 @@ class KaggricultureAgent:
             return {
                 "task": "PASS",
                 "target": None,
+                "crop": None,
+                "product": None,
+                "amount": None,
             }
 
         return {
             "task": decision.action,
             "target": decision.target,
             "crop": decision.crop,
+            "product": decision.product,
+            "amount": decision.amount,
         }
 
     # ---------------------------------------------------------
@@ -153,12 +156,11 @@ class KaggricultureAgent:
 
     def act(self, observation):
         """
-        Main entry point.
+        Main entry point called by Kaggle.
 
         Parameters
         ----------
         observation : dict
-            Kaggriculture observation.
 
         Returns
         -------
@@ -166,11 +168,12 @@ class KaggricultureAgent:
             Kaggle-compatible action dictionary.
         """
 
-        # Update world
+        # Update game state
         self.update(observation)
 
-        # AI decides the next task
+        # AI chooses next task
         task = self.think()
 
-        # Convert task into Kaggle action
+        # Convert planner task into
+        # Kaggle action dictionary
         return self.actions.build(task)
