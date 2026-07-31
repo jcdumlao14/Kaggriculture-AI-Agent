@@ -129,6 +129,7 @@ class KaggricultureAgent:
                 priority=task["priority"],
                 action=task["task"],
                 target=task["target"],
+                crop=task.get("crop"),
             )
 
         decision = self.scheduler.next()
@@ -143,6 +144,7 @@ class KaggricultureAgent:
         return {
             "task": decision.action,
             "target": decision.target,
+            "crop": decision.crop,
         }
 
     # ---------------------------------------------------------

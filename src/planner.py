@@ -12,6 +12,7 @@ or market optimization.
 from __future__ import annotations
 
 from src.constants import Action
+from src.scoring import CropScorer
 
 
 class Planner:
@@ -25,6 +26,7 @@ class Planner:
     def __init__(self, parser, world):
         self.parser = parser
         self.world = world
+        self.scorer = CropScorer(parser)
 
     # ---------------------------------------------------------
     # Main Planner
@@ -105,16 +107,19 @@ class Planner:
                 )
 
         # -----------------------------------------------------
-        # Plant empty tiles
+        # Intelligent Planting Strategy
         # -----------------------------------------------------
 
-        for target in self.world.empty_tiles():
+        best_crop = self.scorer.best_crop()
+
+        for tile in self.world.empty_tiles():
 
             tasks.append(
                 {
                     "priority": 5,
                     "task": Action.PLANT.value,
-                    "target": target,
+                    "crop": best_crop,
+                    "target": tile,
                 }
             )
 
@@ -133,4 +138,3 @@ class Planner:
             )
 
         return tasks
-    

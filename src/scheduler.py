@@ -10,53 +10,68 @@ by importance.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
+
+# ==========================================================
+# Task
+# ==========================================================
 
 @dataclass
 class Task:
     priority: int
     action: str
-    target: Any
+    target: tuple | None = None
+    crop: str | None = None
 
+
+# ==========================================================
+# Scheduler
+# ==========================================================
 
 class Scheduler:
+    """
+    Stores all pending tasks and always returns
+    the highest-priority one.
+    """
 
     def __init__(self):
-
         self.tasks = []
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------
 
     def clear(self):
-
+        """Remove all scheduled tasks."""
         self.tasks.clear()
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------
 
-    def add(self, priority, action, target=None):
+    def add(self, priority, action, target=None, crop=None):
+        """
+        Add a new task to the scheduler.
+        """
 
-        self.tasks.append(
-
-            Task(
-                priority=priority,
-                action=action,
-                target=target,
-            )
-
+        task = Task(
+            priority=priority,
+            action=action,
+            target=target,
+            crop=crop,
         )
 
-    # --------------------------------------------------------
+        self.tasks.append(task)
+
+    # ------------------------------------------------------
 
     def sort(self):
+        """Sort tasks by priority (lower number = higher priority)."""
 
-        self.tasks.sort(
-            key=lambda task: task.priority
-        )
+        self.tasks.sort(key=lambda task: task.priority)
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------
 
     def next(self):
+        """
+        Return the highest-priority task.
+        """
 
         if not self.tasks:
             return None
@@ -65,43 +80,40 @@ class Scheduler:
 
         return self.tasks.pop(0)
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------
 
     def empty(self):
+        """Return True if there are no tasks."""
 
         return len(self.tasks) == 0
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------
 
     def __len__(self):
-
         return len(self.tasks)
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------
 
     def __iter__(self):
-
         self.sort()
-
         return iter(self.tasks)
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------
 
     def summary(self):
+        """
+        Return a readable list of pending tasks.
+        """
 
         return [
-
             {
-
                 "priority": task.priority,
                 "action": task.action,
                 "target": task.target,
-
+                "crop": task.crop,
             }
-
             for task in sorted(
                 self.tasks,
                 key=lambda t: t.priority,
             )
-
         ]
