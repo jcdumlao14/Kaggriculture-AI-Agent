@@ -1,163 +1,89 @@
 """
 market.py
 
-Market analysis module.
+Market Intelligence module for the Kaggriculture AI Agent.
 
-Responsible for analyzing dynamic prices and deciding
-when products should be sold.
+Analyzes market prices and provides simple trading
+recommendations.
+
+Author: Jocelyn Dumlao
+Project: Kaggriculture-AI-Agent
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-
-@dataclass
-class MarketItem:
-    name: str
-    inventory: int
-    price: int
-    base_price: int
-
 
 class Market:
+    """
+    Market analysis.
+    """
 
     def __init__(self, parser):
 
         self.parser = parser
 
-        self.base_prices = {
+        self.market = parser.market
 
-            "WHEAT": 25,
-            "CARROT": 35,
-            "TOMATO": 60,
-            "STRAWBERRY": 120,
-            "MELON": 250,
-
-            "EGG": 50,
-            "MILK": 160,
-            "WOOL": 200,
-
-            "FERTILIZER": 100,
-        }
+        self.inventory = self.market.get("inventory", {})
+        self.prices = self.market.get("prices", {})
 
     # ---------------------------------------------------------
-
-    def items(self):
-
-        inventory = self.parser.market_inventory
-        prices = self.parser.market_prices
-
-        results = []
-
-        for product, price in prices.items():
-
-            results.append(
-
-                MarketItem(
-                    name=product,
-                    inventory=inventory.get(product, 0),
-                    price=price,
-                    base_price=self.base_prices.get(product, price),
-                )
-
-            )
-
-        return results
-
+    # Basic Information
     # ---------------------------------------------------------
 
-    def best_price(self):
-
+    def price(self, product: str) -> int:
         """
-        Highest market price right now.
+        Current market price.
         """
+        return self.prices.get(product, 0)
 
-        return max(
-            self.items(),
-            key=lambda x: x.price,
-        )
+    def inventory_level(self, product: str) -> int:
+        """
+        Current market inventory.
+        """
+        return self.inventory.get(product, 0)
 
     # ---------------------------------------------------------
-
-    def cheapest(self):
-
-        """
-        Lowest market price.
-        """
-
-        return min(
-            self.items(),
-            key=lambda x: x.price,
-        )
-
+    # Price Evaluation
     # ---------------------------------------------------------
 
-    def overpriced(self):
-
+    def is_expensive(self, product: str, base_price: int) -> bool:
         """
-        Products above their base value.
+        Returns True if price is above its base value.
         """
+        return self.price(product) > base_price
 
-        return [
-
-            item
-
-            for item in self.items()
-
-            if item.price > item.base_price
-
-        ]
+    def is_cheap(self, product: str, base_price: int) -> bool:
+        """
+        Returns True if price is below its base value.
+        """
+        return self.price(product) < base_price
 
     # ---------------------------------------------------------
-
-    def underpriced(self):
-
-        """
-        Products below base value.
-        """
-
-        return [
-
-            item
-
-            for item in self.items()
-
-            if item.price < item.base_price
-
-        ]
-
+    # Trading Decisions
     # ---------------------------------------------------------
 
-    def should_sell(self, product):
-
+    def should_sell(self, product: str, base_price: int) -> bool:
         """
-        Decide if current price is good enough.
+        Sell when price is favorable.
         """
+        return self.price(product) >= base_price
 
-        price = self.parser.market_prices.get(product)
+    def should_buy(self, product: str, base_price: int) -> bool:
+        """
+        Buy when price is discounted.
+        """
+        return self.price(product) <= base_price
 
-        base = self.base_prices.get(product)
-
-        if price is None:
-            return False
-
-        return price >= base
-
+    # ---------------------------------------------------------
+    # Summary
     # ---------------------------------------------------------
 
     def summary(self):
-
-        report = {}
-
-        for item in self.items():
-
-            report[item.name] = {
-
-                "Price": item.price,
-                "Inventory": item.inventory,
-                "Above Base": item.price > item.base_price,
-
-            }
-
-        return report
+        """
+        Return current market snapshot.
+        """
+        return {
+            "prices": self.prices,
+            "inventory": self.inventory,
+        }
