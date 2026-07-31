@@ -3,8 +3,8 @@ constants.py
 
 Global constants and enumerations for the Kaggriculture AI Agent.
 
-This module contains only static values used throughout the project.
-No game logic should be implemented here.
+This module contains only static values and enumerations used
+throughout the project. No game logic should be implemented here.
 
 Author: Jocelyn C. Dumlao
 Project: Kaggriculture-AI-Agent
@@ -14,8 +14,10 @@ from __future__ import annotations
 
 from enum import Enum
 
+from src.constants import TileKind
+
 # ==========================================================
-# Game Configuration Defaults
+# Game Configuration
 # ==========================================================
 
 BOARD_SIZE = 10
@@ -52,18 +54,20 @@ EAST = Direction.EAST
 WEST = Direction.WEST
 
 
+# Movement vectors
 DIRECTION_VECTOR = {
-    NORTH: (0, -1),
-    SOUTH: (0, 1),
-    EAST: (1, 0),
-    WEST: (-1, 0),
+    Direction.NORTH: (0, -1),
+    Direction.SOUTH: (0, 1),
+    Direction.EAST: (1, 0),
+    Direction.WEST: (-1, 0),
 }
 
+
 REVERSE_DIRECTION = {
-    NORTH: SOUTH,
-    SOUTH: NORTH,
-    EAST: WEST,
-    WEST: EAST,
+    Direction.NORTH: Direction.SOUTH,
+    Direction.SOUTH: Direction.NORTH,
+    Direction.EAST: Direction.WEST,
+    Direction.WEST: Direction.EAST,
 }
 
 # ==========================================================
@@ -72,7 +76,7 @@ REVERSE_DIRECTION = {
 
 
 class Action(str, Enum):
-    """Farmer actions."""
+    """Actions the farmer can perform."""
 
     PASS = "PASS"
 
@@ -126,19 +130,18 @@ class MarketAction(str, Enum):
 
     HIRE = "HIRE"
 
-
 # ==========================================================
 # Crops
 # ==========================================================
 
 
 class Crop(str, Enum):
+
     WHEAT = "WHEAT"
     CARROT = "CARROT"
     TOMATO = "TOMATO"
     STRAWBERRY = "STRAWBERRY"
     MELON = "MELON"
-
 
 # ==========================================================
 # Animals
@@ -146,10 +149,10 @@ class Crop(str, Enum):
 
 
 class Animal(str, Enum):
+
     GOOSE = "GOOSE"
     COW = "COW"
     SHEEP = "SHEEP"
-
 
 # ==========================================================
 # Buildings
@@ -157,9 +160,9 @@ class Animal(str, Enum):
 
 
 class Building(str, Enum):
+
     COOP = "COOP"
     PASTURE = "PASTURE"
-
 
 # ==========================================================
 # Products
@@ -167,6 +170,7 @@ class Building(str, Enum):
 
 
 class Product(str, Enum):
+
     WHEAT = "WHEAT"
     CARROT = "CARROT"
     TOMATO = "TOMATO"
@@ -179,13 +183,13 @@ class Product(str, Enum):
 
     FERTILIZER = "FERTILIZER"
 
-
 # ==========================================================
 # Tile Types
 # ==========================================================
 
 
 class TileKind(str, Enum):
+
     EMPTY = "EMPTY"
     LOCKED = "LOCKED"
 
@@ -195,18 +199,17 @@ class TileKind(str, Enum):
     COOP = "COOP"
     PASTURE = "PASTURE"
 
-
 # ==========================================================
 # Farm Quadrants
 # ==========================================================
 
 
 class Quadrant(str, Enum):
+
     NW = "NW"
     NE = "NE"
     SW = "SW"
     SE = "SE"
-
 
 # ==========================================================
 # Town Shops
@@ -214,6 +217,7 @@ class Quadrant(str, Enum):
 
 
 class Shop(str, Enum):
+
     BAKERY = "BAKERY"
     PIZZA_SHOP = "PIZZA_SHOP"
     BRUNCH_SPOT = "BRUNCH_SPOT"
@@ -222,7 +226,6 @@ class Shop(str, Enum):
     PET_CAFE = "PET_CAFE"
     SMOOTHIE_SHOP = "SMOOTHIE_SHOP"
     FARMERS_MARKET = "FARMERS_MARKET"
-
 
 # ==========================================================
 # Resource Collections
@@ -238,20 +241,15 @@ ALL_BUILDINGS = tuple(Building)
 
 ALL_SHOPS = tuple(Shop)
 
-ALL_MARKET_ACTIONS = tuple(MarketAction)
-
 ALL_DIRECTIONS = tuple(Direction)
 
 ALL_ACTIONS = tuple(Action)
 
-# ==========================================================
-# Common Lookup Sets
-# ==========================================================
+ALL_MARKET_ACTIONS = tuple(MarketAction)
 
-ONGOING_CROPS = {
-    Crop.TOMATO,
-    Crop.STRAWBERRY,
-}
+# ==========================================================
+# Crop Categories
+# ==========================================================
 
 ONE_TIME_CROPS = {
     Crop.WHEAT,
@@ -259,14 +257,45 @@ ONE_TIME_CROPS = {
     Crop.MELON,
 }
 
+ONGOING_CROPS = {
+    Crop.TOMATO,
+    Crop.STRAWBERRY,
+}
+
+# ==========================================================
+# Animal Products
+# ==========================================================
+
 ANIMAL_PRODUCTS = {
     Animal.GOOSE: Product.EGG,
     Animal.COW: Product.MILK,
     Animal.SHEEP: Product.WOOL,
 }
 
+# ==========================================================
+# Animal Buildings
+# ==========================================================
+
 BUILDING_FOR_ANIMAL = {
     Animal.GOOSE: Building.COOP,
     Animal.COW: Building.PASTURE,
     Animal.SHEEP: Building.PASTURE,
+}
+
+# ==========================================================
+# Helper Lookup Sets
+# ==========================================================
+
+MOVE_DIRECTIONS = {
+    Direction.NORTH.value,
+    Direction.SOUTH.value,
+    Direction.EAST.value,
+    Direction.WEST.value,
+}
+
+MOVE_ACTION_VALUES = {
+    Action.NORTH.value,
+    Action.SOUTH.value,
+    Action.EAST.value,
+    Action.WEST.value,
 }
