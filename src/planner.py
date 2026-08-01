@@ -13,9 +13,8 @@ Project: Kaggriculture-AI-Agent
 """
 
 from __future__ import annotations
-
-from src.constants import Action
-
+from src.constants import (Action,MarketAction,)
+from src.constants import Action, MarketAction
 
 class Planner:
     """
@@ -89,7 +88,7 @@ class Planner:
                 tasks.append(
                     {
                         "priority": 2,
-                        "task": Action.SELL.value,
+                        "task": MarketAction.SELL.value,
                         "product": product,
                         "amount": amount,
                         "target": None,
@@ -153,7 +152,7 @@ class Planner:
             tasks.append(
                 {
                     "priority": 6,
-                    "task": Action.BUY_PRODUCT.value,
+                    "task": MarketAction.BUY_PRODUCT.value,
                     "product": "FERTILIZER",
                     "amount": 1,
                     "target": None,
@@ -169,7 +168,7 @@ class Planner:
             tasks.append(
                 {
                     "priority": 7,
-                    "task": Action.BUY_PRODUCT.value,
+                    "task": MarketAction.BUY_PRODUCT.value,
                     "product": "WHEAT",
                     "amount": 5,
                     "target": None,
@@ -186,7 +185,7 @@ class Planner:
 
             tasks.append(
                 {
-                    "priority": 8,
+                    "priority": 5,
                     "task": Action.PLANT.value,
                     "crop": best_crop,
                     "target": tile,
@@ -208,3 +207,5 @@ class Planner:
             )
 
         return tasks
+
+ 

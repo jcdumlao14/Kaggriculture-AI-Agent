@@ -22,6 +22,8 @@ class Task:
     action: str
     target: tuple | None = None
     crop: str | None = None
+    product: str | None = None
+    amount: int | None = None
 
 
 # ==========================================================

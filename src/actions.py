@@ -175,9 +175,11 @@ class ActionBuilder:
                 "farmer": [],
                 "hands": [],
                 "market": [
-                    "SELL",
-                    task["product"],
-                    task["amount"],
+                    [
+                        "SELL",
+                        task["product"],
+                        task["amount"],
+                    ]
                 ],
             }
 
