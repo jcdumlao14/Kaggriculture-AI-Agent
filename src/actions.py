@@ -36,12 +36,31 @@ class ActionBuilder:
         """
         Convert a planner task into the action dictionary
         expected by Kaggle.
+
+        Supports both:
+        - planner dictionaries
+        - Scheduler Task dataclass objects
         """
 
         if task is None:
             return self.pass_turn()
 
-        action = task.get("task")
+        # -----------------------------------------------------
+        # Support both dict and Task objects
+        # -----------------------------------------------------
+
+        if isinstance(task, dict):
+            action = task.get("task")
+            target = task.get("target")
+            crop = task.get("crop")
+            product = task.get("product")
+            amount = task.get("amount")
+        else:
+            action = task.action
+            target = task.target
+            crop = task.crop
+            product = task.product
+            amount = task.amount
 
         # =====================================================
         # Movement
@@ -157,7 +176,7 @@ class ActionBuilder:
 
         if action == Action.PLANT.value:
 
-            crop = task.get("crop", "WHEAT")
+            crop = crop or "WHEAT"
 
             return {
                 "farmer": ["PLANT", crop],
@@ -177,8 +196,8 @@ class ActionBuilder:
                 "market": [
                     [
                         "SELL",
-                        task["product"],
-                        task["amount"],
+                        product,
+                        amount,
                     ]
                 ],
             }
@@ -193,9 +212,11 @@ class ActionBuilder:
                 "farmer": [],
                 "hands": [],
                 "market": [
-                    "BUY",
-                    task["product"],
-                    task["amount"],
+                    [
+                        "BUY",
+                        product,
+                        amount,
+                    ]
                 ],
             }
 

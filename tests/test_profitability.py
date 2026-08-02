@@ -5,10 +5,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.parser import ObservationParser
-from src.profitability import ProfitCalculator
+from src.profitability import Profitability
 
 
-def test_best_crop():
+def test_profit_positive():
+
     observation = {
         "player": 0,
         "day": 1,
@@ -41,6 +42,7 @@ def test_best_crop():
     }
 
     parser = ObservationParser(observation)
-    profit = ProfitCalculator(parser)
 
-    print("Best crop:", profit.best_crop())
+    engine = Profitability(parser)
+
+    assert engine.profit("WHEAT") > 0

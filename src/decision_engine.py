@@ -3,42 +3,61 @@ decision_engine.py
 
 Central decision engine for the Kaggriculture AI Agent.
 
+Coordinates the planner and scheduler to determine
+the next task for the agent.
+
 Author: Jocelyn C. Dumlao
+Project: Kaggriculture-AI-Agent
 """
 
-from src.world import World
-from src.market import Market
+from __future__ import annotations
+
 from src.planner import Planner
 from src.scheduler import Scheduler
 
 
 class DecisionEngine:
     """
-    Combines all AI modules into one decision pipeline.
+    Combines the planner and scheduler into one
+    decision pipeline.
     """
 
-    def __init__(self, parser):
-        self.parser = parser
+    def __init__(self, parser, world, market):
+        """
+        Parameters
+        ----------
+        parser : ObservationParser
+        world : World
+        market : Market
+        """
 
-        self.world = World(parser)
-        self.market = Market(parser)
+        self.parser = parser
+        self.world = world
+        self.market = market
 
         self.planner = Planner(
             parser,
-            self.world,
-            self.market,
+            world,
+            market,
         )
 
         self.scheduler = Scheduler()
+
+    # ---------------------------------------------------------
+    # Decision Pipeline
+    # ---------------------------------------------------------
 
     def next_task(self):
         """
         Return the highest-priority task.
         """
 
+        self.scheduler.clear()
+
         tasks = self.planner.plan()
 
         for task in tasks:
+
             self.scheduler.add(
                 priority=task["priority"],
                 action=task["task"],

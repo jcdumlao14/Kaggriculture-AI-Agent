@@ -1,5 +1,7 @@
 from src.decision_engine import DecisionEngine
 from src.parser import ObservationParser
+from src.world import World
+from src.market import Market
 
 
 def test_engine_returns_task():
@@ -31,10 +33,21 @@ def test_engine_returns_task():
         },
     }
 
+    # Parse the observation
     parser = ObservationParser(observation)
 
-    engine = DecisionEngine(parser)
+    # Build helper modules
+    world = World(parser)
+    market = Market(parser)
 
+    # Create the decision engine
+    engine = DecisionEngine(
+        parser,
+        world,
+        market,
+    )
+
+    # Get the next task
     task = engine.next_task()
 
     assert task is not None

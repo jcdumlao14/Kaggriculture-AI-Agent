@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from src.constants import Action, MarketAction
 from src.crop_strategy import CropStrategy
+from src.market_memory import MarketMemory
 
 
 class Planner:
@@ -49,6 +50,9 @@ class Planner:
         # Crop intelligence
         self.crop_strategy = CropStrategy(parser)
 
+        # Market history
+        self.market_memory = MarketMemory()
+
     # ---------------------------------------------------------
     # Main Planner
     # ---------------------------------------------------------
@@ -65,8 +69,14 @@ class Planner:
 
         tasks = []
 
+        # ---------------------------------------------------------
+        # Update Market History
+        # ---------------------------------------------------------
+
+        self.market_memory.update(self.parser.prices)
+
         # =====================================================
-        # 1. Harvest Mature Crops (Highest Priority)
+        # 1. Harvest Mature Crops
         # =====================================================
 
         for target in self.world.harvestable_plants():
@@ -88,7 +98,13 @@ class Planner:
             if amount <= 0:
                 continue
 
-            if self.market.should_sell(product):
+            if (
+                self.market.should_sell(product)
+                or self.market.is_good_sell_price(
+                    product,
+                    self.market_memory,
+                )
+            ):
 
                 tasks.append(
                     {
@@ -169,7 +185,13 @@ class Planner:
         # 7. Buy Fertilizer
         # =====================================================
 
-        if self.market.should_buy_fertilizer():
+        if (
+            self.market.should_buy_fertilizer()
+            or self.market.is_good_buy_price(
+                "FERTILIZER",
+                self.market_memory,
+            )
+        ):
 
             tasks.append(
                 {
@@ -185,7 +207,13 @@ class Planner:
         # 8. Buy Wheat Seeds
         # =====================================================
 
-        if self.market.should_buy_wheat():
+        if (
+            self.market.should_buy_wheat()
+            or self.market.is_good_buy_price(
+                "WHEAT",
+                self.market_memory,
+            )
+        ):
 
             tasks.append(
                 {
