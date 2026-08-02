@@ -13,14 +13,16 @@ Project: Kaggriculture-AI-Agent
 """
 
 from __future__ import annotations
-from src.constants import (Action,MarketAction,)
+
 from src.constants import Action, MarketAction
+from src.crop_strategy import CropStrategy
+
 
 class Planner:
     """
     High-level Planner.
 
-    Responsible for deciding WHAT should be done next.
+    Responsible for deciding WHAT should happen next.
 
     It does not decide HOW to reach the target—that is
     handled by the movement/pathfinding system.
@@ -44,18 +46,21 @@ class Planner:
         self.world = world
         self.market = market
 
+        # Crop intelligence
+        self.crop_strategy = CropStrategy(parser)
+
     # ---------------------------------------------------------
     # Main Planner
     # ---------------------------------------------------------
 
     def plan(self):
         """
-        Generate all possible tasks.
+        Generate every possible task.
 
         Returns
         -------
         list[dict]
-            List of task dictionaries.
+            Candidate tasks.
         """
 
         tasks = []
@@ -75,7 +80,7 @@ class Planner:
             )
 
         # =====================================================
-        # 2. Sell Products When Prices Are Good
+        # 2. Sell Products
         # =====================================================
 
         for product, amount in self.parser.shed.items():
@@ -144,14 +149,31 @@ class Planner:
                 )
 
         # =====================================================
-        # 6. Buy Fertilizer
+        # 6. Plant Best Crop
+        # =====================================================
+
+        best_crop = self.crop_strategy.best_crop()
+
+        for tile in self.world.empty_tiles():
+
+            tasks.append(
+                {
+                    "priority": 6,
+                    "task": Action.PLANT.value,
+                    "crop": best_crop,
+                    "target": tile,
+                }
+            )
+
+        # =====================================================
+        # 7. Buy Fertilizer
         # =====================================================
 
         if self.market.should_buy_fertilizer():
 
             tasks.append(
                 {
-                    "priority": 6,
+                    "priority": 7,
                     "task": MarketAction.BUY_PRODUCT.value,
                     "product": "FERTILIZER",
                     "amount": 1,
@@ -160,14 +182,14 @@ class Planner:
             )
 
         # =====================================================
-        # 7. Buy Wheat
+        # 8. Buy Wheat Seeds
         # =====================================================
 
         if self.market.should_buy_wheat():
 
             tasks.append(
                 {
-                    "priority": 7,
+                    "priority": 8,
                     "task": MarketAction.BUY_PRODUCT.value,
                     "product": "WHEAT",
                     "amount": 5,
@@ -176,24 +198,7 @@ class Planner:
             )
 
         # =====================================================
-        # 8. Plant Best Crop
-        # =====================================================
-
-        best_crop = self.market.best_crop()
-
-        for tile in self.world.empty_tiles():
-
-            tasks.append(
-                {
-                    "priority": 5,
-                    "task": Action.PLANT.value,
-                    "crop": best_crop,
-                    "target": tile,
-                }
-            )
-
-        # =====================================================
-        # 9. Nothing To Do
+        # 9. Pass Turn
         # =====================================================
 
         if not tasks:
@@ -206,6 +211,10 @@ class Planner:
                 }
             )
 
-        return tasks
+        # =====================================================
+        # Sort Tasks
+        # =====================================================
 
- 
+        tasks.sort(key=lambda task: task["priority"])
+
+        return tasks

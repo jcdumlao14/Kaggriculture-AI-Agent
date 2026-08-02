@@ -22,6 +22,7 @@ from src.economy import Economy
 from src.state import StateManager
 from src.actions import ActionBuilder
 from src.pathfinder import Pathfinder
+from src.market_memory import MarketMemory
 
 
 class KaggricultureAgent:
@@ -107,6 +108,13 @@ class KaggricultureAgent:
 
         # Market
         self.market = Market(self.parser)
+
+        self.market_memory.update(
+            self.parser.prices
+        )
+
+        # Market Memory
+        self.market_memory = MarketMemory()
 
         # Economy
         if hasattr(self.parser, "money"):

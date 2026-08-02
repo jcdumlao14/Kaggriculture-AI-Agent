@@ -5,6 +5,9 @@ Task scheduler for Kaggriculture AI.
 
 Responsible for ordering all pending jobs
 by importance.
+
+Author: Jocelyn C. Dumlao
+Project: Kaggriculture-AI-Agent
 """
 
 from __future__ import annotations
@@ -18,6 +21,10 @@ from dataclasses import dataclass
 
 @dataclass
 class Task:
+    """
+    Represents one scheduled task.
+    """
+
     priority: int
     action: str
     target: tuple | None = None
@@ -32,22 +39,28 @@ class Task:
 
 class Scheduler:
     """
-    Stores all pending tasks and always returns
-    the highest-priority one.
+    Stores pending tasks and always returns the
+    highest-priority task first.
+
+    Lower priority values indicate higher importance.
     """
 
     def __init__(self):
-        self.tasks = []
+        self.tasks: list[Task] = []
 
     # ------------------------------------------------------
-
-    def clear(self):
-        """Remove all scheduled tasks."""
-        self.tasks.clear()
-
+    # Add Task
     # ------------------------------------------------------
 
-    def add(self, priority, action, target=None, crop=None, product=None, amount=None,):
+    def add(
+        self,
+        priority,
+        action,
+        target=None,
+        crop=None,
+        product=None,
+        amount=None,
+    ):
         """
         Add a new task to the scheduler.
         """
@@ -64,20 +77,41 @@ class Scheduler:
         self.tasks.append(task)
 
     # ------------------------------------------------------
+    # Sort Tasks
+    # ------------------------------------------------------
 
     def sort(self):
-        """Sort tasks by priority (lower number = higher priority)."""
+        """
+        Sort tasks by priority.
+        Lower number = higher priority.
+        """
 
         self.tasks.sort(key=lambda task: task.priority)
 
     # ------------------------------------------------------
+    # Backward Compatibility
+    # ------------------------------------------------------
 
     def next(self):
         """
-        Return the highest-priority task.
+        Alias for next_task().
+
+        Maintained for backward compatibility with
+        existing tests and modules.
         """
 
-        if not self.tasks:
+        return self.next_task()
+
+    # ------------------------------------------------------
+    # Get Next Task
+    # ------------------------------------------------------
+
+    def next_task(self):
+        """
+        Return and remove the highest-priority task.
+        """
+
+        if self.empty():
             return None
 
         self.sort()
@@ -85,17 +119,36 @@ class Scheduler:
         return self.tasks.pop(0)
 
     # ------------------------------------------------------
+    # Clear
+    # ------------------------------------------------------
+
+    def clear(self):
+        """
+        Remove all scheduled tasks.
+        """
+
+        self.tasks.clear()
+
+    # ------------------------------------------------------
+    # Empty
+    # ------------------------------------------------------
 
     def empty(self):
-        """Return True if there are no tasks."""
+        """
+        Return True if no tasks exist.
+        """
 
         return len(self.tasks) == 0
 
+    # ------------------------------------------------------
+    # Length
     # ------------------------------------------------------
 
     def __len__(self):
         return len(self.tasks)
 
+    # ------------------------------------------------------
+    # Iterator
     # ------------------------------------------------------
 
     def __iter__(self):
@@ -103,10 +156,12 @@ class Scheduler:
         return iter(self.tasks)
 
     # ------------------------------------------------------
+    # Summary
+    # ------------------------------------------------------
 
     def summary(self):
         """
-        Return a readable list of pending tasks.
+        Return all scheduled tasks as dictionaries.
         """
 
         return [
@@ -115,6 +170,8 @@ class Scheduler:
                 "action": task.action,
                 "target": task.target,
                 "crop": task.crop,
+                "product": task.product,
+                "amount": task.amount,
             }
             for task in sorted(
                 self.tasks,
