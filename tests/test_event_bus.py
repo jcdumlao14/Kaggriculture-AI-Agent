@@ -37,6 +37,7 @@ def test_unsubscribe():
         pass
 
     bus.subscribe("episode", callback)
+
     bus.unsubscribe("episode", callback)
 
     assert bus.listener_count("episode") == 0
@@ -74,3 +75,50 @@ def test_clear():
     bus.clear()
 
     assert bus.listener_count("x") == 0
+
+
+# ------------------------------------------------------------------
+
+
+def test_has_event():
+
+    bus = EventBus()
+
+    def callback(data):
+        pass
+
+    bus.subscribe("training_complete", callback)
+
+    assert bus.has_event("training_complete")
+
+
+def test_missing_event():
+
+    bus = EventBus()
+
+    assert not bus.has_event("unknown")
+
+
+def test_events():
+
+    bus = EventBus()
+
+    def callback(data):
+        pass
+
+    bus.subscribe("deploy", callback)
+    bus.subscribe("train", callback)
+
+    assert bus.events() == [
+        "deploy",
+        "train",
+    ]
+
+
+def test_publish_without_listener():
+
+    bus = EventBus()
+
+    bus.publish("missing")
+
+    assert bus.listener_count("missing") == 0

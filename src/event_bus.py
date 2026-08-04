@@ -21,7 +21,11 @@ class EventBus:
 
     # ---------------------------------------------------------
 
-    def subscribe(self, event: str, callback):
+    def subscribe(
+        self,
+        event: str,
+        callback,
+    ):
         """
         Register a callback for an event.
         """
@@ -29,7 +33,11 @@ class EventBus:
 
     # ---------------------------------------------------------
 
-    def unsubscribe(self, event: str, callback):
+    def unsubscribe(
+        self,
+        event: str,
+        callback,
+    ):
         """
         Remove a callback.
         """
@@ -38,9 +46,16 @@ class EventBus:
         if listeners and callback in listeners:
             listeners.remove(callback)
 
+            if not listeners:
+                self._listeners.pop(event)
+
     # ---------------------------------------------------------
 
-    def publish(self, event: str, data=None):
+    def publish(
+        self,
+        event: str,
+        data=None,
+    ):
         """
         Publish an event.
         """
@@ -49,11 +64,33 @@ class EventBus:
 
     # ---------------------------------------------------------
 
-    def listener_count(self, event: str) -> int:
+    def listener_count(
+        self,
+        event: str,
+    ) -> int:
         """
         Return number of listeners.
         """
         return len(self._listeners.get(event, []))
+
+    # ---------------------------------------------------------
+
+    def has_event(
+        self,
+        event: str,
+    ) -> bool:
+        """
+        Return True if an event has listeners.
+        """
+        return event in self._listeners
+
+    # ---------------------------------------------------------
+
+    def events(self):
+        """
+        Return all registered event names.
+        """
+        return sorted(self._listeners.keys())
 
     # ---------------------------------------------------------
 
