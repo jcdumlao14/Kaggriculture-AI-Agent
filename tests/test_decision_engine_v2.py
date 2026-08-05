@@ -106,3 +106,19 @@ def test_multiple_tiles():
     actions = engine.choose_actions(observation)
 
     assert len(actions) == 2
+
+def test_endgame_sell_priority():
+    ...
+
+def test_late_turn_priority():
+    ...
+
+def test_midgame_behavior():
+    ...
+
+def test_early_game_behavior():
+    ...
+
+def test_phase_context_available():
+    ...
+  

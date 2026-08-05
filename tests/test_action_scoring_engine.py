@@ -2,54 +2,84 @@ from src.action_scoring_engine import (
     ActionScoringEngine,
 )
 
+def test_sell_bonus_from_market():
 
-def test_score():
+    engine = ActionScoringEngine()
+
+    game_state = {
+        "market": {
+            "prices": {
+                "TOMATO": 200,
+                "MELON": 300,
+            }
+        }
+    }
+
+    score = engine.score(
+        action="SELL",
+        game_state=game_state,
+    )
+
+    assert score == 50.0
+
+
+def test_harvest_bonus():
+
+    engine = ActionScoringEngine()
+
+    game_state = {
+        "market": {
+            "prices": {
+                "MELON": 300,
+            }
+        }
+    }
+
+    score = engine.score(
+        action="HARVEST",
+        game_state=game_state,
+    )
+
+    assert score == 65.0
+
+
+def test_buy_seed_penalty():
+
+    engine = ActionScoringEngine()
+
+    game_state = {
+        "market": {
+            "prices": {
+                "MELON": 300,
+            }
+        }
+    }
+
+    score = engine.score(
+        action="BUY_SEED",
+        game_state=game_state,
+    )
+
+    assert score == -2.5
+
+
+def test_without_game_state():
 
     engine = ActionScoringEngine()
 
     score = engine.score(
-        action="HARVEST",
-        farm_score=100,
-        crop_profit=80,
-        animal_profit=20,
-        market_score=10,
+        action="SELL",
     )
 
-    assert score == 260
+    assert score == 20.0
 
 
-def test_bonus():
-
-    engine = ActionScoringEngine()
-
-    assert engine.action_bonus(
-        "PLANT",
-    ) == 25
-
-
-def test_supported():
+def test_unknown_action_score():
 
     engine = ActionScoringEngine()
 
-    assert engine.is_supported(
-        "SELL",
+    score = engine.score(
+        action="UNKNOWN",
     )
 
-
-def test_unknown_action():
-
-    engine = ActionScoringEngine()
-
-    assert not engine.is_supported(
-        "UNKNOWN",
-    )
-
-
-def test_supported_actions():
-
-    engine = ActionScoringEngine()
-
-    actions = engine.supported_actions()
-
-    assert "HARVEST" in actions
-    assert "PLANT" in actions
+    assert score == 0.0

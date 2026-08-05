@@ -65,3 +65,31 @@ class TaskScheduler:
         Remove every queued task.
         """
         self._queue.clear()
+
+        # ---------------------------------------------------------
+
+    def peek(self):
+        """
+        Return the next task without removing it.
+        """
+
+        if not self._queue:
+            return None
+
+        return self._queue[0]
+
+    # ---------------------------------------------------------
+
+    def run_all(self):
+        """
+        Execute every queued task.
+        """
+
+        results = []
+
+        while self.has_tasks():
+            results.append(
+                self.run_next()
+            )
+
+        return results

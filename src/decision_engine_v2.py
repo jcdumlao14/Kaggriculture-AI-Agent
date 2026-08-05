@@ -19,6 +19,7 @@ from src.observation_parser import ObservationParser
 from src.game_state_adapter import GameStateAdapter
 from src.search_controller import SearchController
 from src.search_dispatcher import SearchDispatcher
+from src.game_phase_coordinator import GamePhaseCoordinator
 
 class DecisionEngineV2:
     """
@@ -33,6 +34,7 @@ class DecisionEngineV2:
         self.adapter = GameStateAdapter()
         self.search_controller = SearchController()
         self.dispatcher = SearchDispatcher()
+        self.phase = GamePhaseCoordinator()
         
 
     # ---------------------------------------------------------
@@ -48,6 +50,11 @@ class DecisionEngineV2:
         # Parse and normalize the observation
         state = self.parser.parse(observation)
         game_state = self.adapter.adapt(observation)
+
+        game_phase = self.phase.game_phase(
+            day=game_state.get("day", 0),
+            hour=game_state.get("hour", 0),
+        )
 
         # Select the search algorithm (used in future phases)
         algorithm = self.search_controller.select_algorithm(

@@ -3,7 +3,8 @@ scoring.py
 
 Crop scoring engine for the Kaggriculture AI Agent.
 
-Evaluates crops and selects the best planting choice.
+Evaluates every crop according to profitability,
+investment cost, and remaining season length.
 
 Author: Jocelyn C. Dumlao
 Project: Kaggriculture-AI-Agent
@@ -16,8 +17,12 @@ from src.crops import CROPS
 
 class CropScorer:
     """
-    Scores every crop according to expected profitability.
+    Scores crops according to expected profitability.
     """
+
+    SEASON_LENGTH = 30
+
+    # ---------------------------------------------------------
 
     def __init__(self, parser):
 
@@ -27,22 +32,48 @@ class CropScorer:
     # ROI
     # ---------------------------------------------------------
 
-    def roi(self, crop_name: str) -> float:
+    def roi(
+        self,
+        crop_name: str,
+    ) -> float:
         """
-        Return the return-on-investment.
+        Return the crop ROI.
         """
 
         crop = CROPS[crop_name]
 
-        return (crop.base_price - crop.seed_cost) / crop.seed_cost
+        if crop.seed_cost <= 0:
+            return 0.0
+
+        return (
+            crop.base_price - crop.seed_cost
+        ) / crop.seed_cost
 
     # ---------------------------------------------------------
-    # Can Grow?
+    # Days Remaining
     # ---------------------------------------------------------
 
-    def can_finish(self, crop_name: str) -> bool:
+    def remaining_days(self) -> int:
         """
-        Check whether there is enough season left.
+        Return remaining season days.
+        """
+
+        return max(
+            0,
+            self.SEASON_LENGTH - self.parser.day,
+        )
+
+    # ---------------------------------------------------------
+    # Can Finish?
+    # ---------------------------------------------------------
+
+    def can_finish(
+        self,
+        crop_name: str,
+    ) -> bool:
+        """
+        Return True if the crop can
+        produce before the season ends.
         """
 
         crop = CROPS[crop_name]
@@ -50,56 +81,154 @@ class CropScorer:
         if crop.first_yield_day is None:
             return True
 
-        days_remaining = 30 - self.parser.day
-
-        return crop.first_yield_day <= days_remaining
+        return (
+            crop.first_yield_day
+            <= self.remaining_days()
+        )
 
     # ---------------------------------------------------------
-    # Afford?
+    # Affordable?
     # ---------------------------------------------------------
 
-    def affordable(self, crop_name: str) -> bool:
+    def affordable(
+        self,
+        crop_name: str,
+    ) -> bool:
+        """
+        Return True if enough money exists.
+        """
 
         crop = CROPS[crop_name]
 
-        return self.parser.money >= crop.seed_cost
+        return (
+            self.parser.money
+            >= crop.seed_cost
+        )
+
+    # ---------------------------------------------------------
+    # Profit
+    # ---------------------------------------------------------
+
+    def expected_profit(
+        self,
+        crop_name: str,
+    ) -> float:
+        """
+        Expected single harvest profit.
+        """
+
+        crop = CROPS[crop_name]
+
+        return float(
+            crop.base_price - crop.seed_cost
+        )
 
     # ---------------------------------------------------------
     # Score
     # ---------------------------------------------------------
 
-    def score(self, crop_name: str) -> float:
+    def score(
+        self,
+        crop_name: str,
+    ) -> float:
+        """
+        Return a weighted crop score.
+        """
+
+        if crop_name not in CROPS:
+            return -1.0
 
         if not self.can_finish(crop_name):
-            return -1
+            return -1.0
 
         if not self.affordable(crop_name):
-            return -1
+            return -1.0
 
         crop = CROPS[crop_name]
 
-        score = 0
+        score = 0.0
 
-        # Profit
-        score += crop.base_price
+        # ----------------------------------
+        # Base selling value
+        # ----------------------------------
 
-        # Cheap seeds
-        score -= crop.seed_cost * 0.30
+        score += float(crop.base_price)
 
-        # ROI
-        score += self.roi(crop_name) * 20
+        # ----------------------------------
+        # Seed cost penalty
+        # ----------------------------------
 
-        return score
+        score -= float(crop.seed_cost) * 0.30
+
+        # ----------------------------------
+        # ROI bonus
+        # ----------------------------------
+
+        score += self.roi(crop_name) * 20.0
+
+        # ----------------------------------
+        # Fast crops receive a bonus
+        # ----------------------------------
+
+        if crop.first_yield_day is not None:
+
+            score += max(
+                0,
+                10 - crop.first_yield_day,
+            )
+
+        # ----------------------------------
+        # End-of-season penalty
+        # ----------------------------------
+
+        remaining = self.remaining_days()
+
+        if (
+            crop.first_yield_day is not None
+            and crop.first_yield_day > remaining
+        ):
+            score -= 1000
+
+        return float(score)
 
     # ---------------------------------------------------------
-    # Best Crop
+    # Rank Crops
     # ---------------------------------------------------------
 
-    def best_crop(self):
+    def ranked_crops(self):
+        """
+        Return crops ranked by score.
+        """
 
         scores = {
             crop: self.score(crop)
             for crop in CROPS
         }
 
-        return max(scores, key=scores.get)
+        return sorted(
+            scores.items(),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+
+    # ---------------------------------------------------------
+    # Best Crop
+    # ---------------------------------------------------------
+
+    def best_crop(self) -> str:
+        """
+        Return highest scoring crop.
+        """
+
+        return self.ranked_crops()[0][0]
+
+    # ---------------------------------------------------------
+    # Best Score
+    # ---------------------------------------------------------
+
+    def best_score(self) -> float:
+        """
+        Return highest crop score.
+        """
+
+        return self.ranked_crops()[0][1]
