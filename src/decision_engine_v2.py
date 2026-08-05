@@ -20,6 +20,8 @@ from src.game_state_adapter import GameStateAdapter
 from src.search_controller import SearchController
 from src.search_dispatcher import SearchDispatcher
 from src.game_phase_coordinator import GamePhaseCoordinator
+from src.market_decision_engine import MarketDecisionEngine
+
 
 class DecisionEngineV2:
     """
@@ -35,7 +37,47 @@ class DecisionEngineV2:
         self.search_controller = SearchController()
         self.dispatcher = SearchDispatcher()
         self.phase = GamePhaseCoordinator()
-        
+        self.market_engine = MarketDecisionEngine()
+
+    # ---------------------------------------------------------
+
+    def _market_score(
+        self,
+        game_state: dict,
+    ) -> float:
+        """
+        Compute a market bonus based on current prices.
+        """
+
+        market = game_state.get(
+            "market",
+            {},
+        )
+
+        prices = market.get(
+            "prices",
+            {},
+        )
+
+        if not prices:
+            return 0.0
+
+        average_price = (
+            sum(prices.values())
+            / len(prices)
+        )
+
+        highest_price = max(
+            prices.values()
+        )
+
+        if self.market_engine.should_sell(
+            current_price=highest_price,
+            average_price=average_price,
+        ):
+            return 20.0
+
+        return 0.0
 
     # ---------------------------------------------------------
 
@@ -47,34 +89,53 @@ class DecisionEngineV2:
         Return the best legal action.
         """
 
-        # Parse and normalize the observation
-        state = self.parser.parse(observation)
-        game_state = self.adapter.adapt(observation)
-
-        game_phase = self.phase.game_phase(
-            day=game_state.get("day", 0),
-            hour=game_state.get("hour", 0),
-        )
-
-        # Select the search algorithm (used in future phases)
-        algorithm = self.search_controller.select_algorithm(
-            turn=observation.get("turn", 0)
-        )
-
-        actions = self.filter.filter_actions(
-            self.generator.generate(observation),
+        # Normalize observation
+        game_state = self.adapter.adapt(
             observation,
         )
 
-        algorithm = self.search_controller.select_algorithm(
-            turn=observation.get("turn", 0)
+        # Current game phase
+        game_phase = self.phase.game_phase(
+            day=game_state.get(
+                "day",
+                0,
+            ),
+            hour=game_state.get(
+                "hour",
+                0,
+            ),
         )
 
-        selected = self.dispatcher.dispatch(
+        # Currently reserved for future phase-aware scoring
+        _ = game_phase
+
+        # Market evaluation
+        market_score = self._market_score(
+            game_state,
+        )
+
+        # Select search algorithm
+        algorithm = self.search_controller.select_algorithm(
+            turn=observation.get(
+                "turn",
+                0,
+            ),
+        )
+
+        # Dispatch search (future integration)
+        _ = self.dispatcher.dispatch(
             algorithm,
             game_state,
         )
-        
+
+        # Generate legal actions
+        actions = self.filter.filter_actions(
+            self.generator.generate(
+                observation,
+            ),
+            observation,
+        )
+
         if not actions:
             return None
 
@@ -85,7 +146,16 @@ class DecisionEngineV2:
 
             score = self.scorer.score(
                 action=action["action"],
+                market_score=market_score,
+                game_state=game_state,
             )
+
+            #
+            # Future:
+            # Season-aware adjustments
+            # Opponent-aware adjustments
+            # Search evaluation bonus
+            #
 
             if score > best_score:
                 best_score = score
@@ -103,17 +173,18 @@ class DecisionEngineV2:
         Return all legal actions sorted by score.
         """
 
-        # Parse and normalize the observation
-        state = self.parser.parse(observation)
-        game_state = self.adapter.adapt(observation)
+        game_state = self.adapter.adapt(
+            observation,
+        )
 
-        # Select the search algorithm (used in future phases)
-        algorithm = self.search_controller.select_algorithm(
-            turn=observation.get("turn", 0)
+        market_score = self._market_score(
+            game_state,
         )
 
         actions = self.filter.filter_actions(
-            self.generator.generate(observation),
+            self.generator.generate(
+                observation,
+            ),
             observation,
         )
 
@@ -121,6 +192,8 @@ class DecisionEngineV2:
             actions,
             key=lambda action: self.scorer.score(
                 action=action["action"],
+                market_score=market_score,
+                game_state=game_state,
             ),
             reverse=True,
         )

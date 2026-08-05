@@ -14,6 +14,10 @@ from __future__ import annotations
 
 from src.search_controller import SearchController
 from src.turn_phase_manager import TurnPhaseManager
+from src.crop_planner import CropPlanner
+from src.animal_planner import AnimalPlanner
+from src.expansion_planner import ExpansionPlanner
+from src.worker_planner import WorkerPlanner
 
 
 class StrategyCoordinator:
@@ -25,6 +29,46 @@ class StrategyCoordinator:
 
         self.search = SearchController()
         self.turn_phase = TurnPhaseManager()
+        self.crop_planner = None
+        self.animal_planner = AnimalPlanner()
+        self.expansion_planner = ExpansionPlanner()
+        self.worker_planner = WorkerPlanner()
+
+        # ---------------------------------------------------------
+
+    def worker_count(
+        self,
+        game_state: dict,
+    ) -> int:
+
+        return self.worker_planner.worker_count(
+            game_state,
+        )
+
+    # ---------------------------------------------------------
+
+    def best_animal_action(
+        self,
+        animal: dict,
+    ) -> str:
+
+        return self.animal_planner.best_action(
+            animal,
+        )
+
+    # ---------------------------------------------------------
+
+    def should_expand(
+        self,
+        *,
+        money: float,
+        available_land: int,
+    ) -> bool:
+
+        return self.expansion_planner.should_expand(
+            money=money,
+            available_land=available_land,
+        )
 
     # ---------------------------------------------------------
 

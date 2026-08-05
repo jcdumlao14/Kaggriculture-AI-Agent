@@ -64,3 +64,43 @@ def test_end_day():
     assert coordinator.is_end_of_day(
         make_obs(hour=21),
     )
+
+def test_worker_count():
+
+    coordinator = StrategyCoordinator()
+
+    state = {
+        "farmer": [0, 0],
+        "hands": [
+            [1, 1],
+            [2, 2],
+        ],
+    }
+
+    assert coordinator.worker_count(state) == 3
+
+
+def test_best_animal_action():
+
+    coordinator = StrategyCoordinator()
+
+    animal = {
+        "harvest_ready": True,
+    }
+
+    assert (
+        coordinator.best_animal_action(
+            animal,
+        )
+        == "HARVEST"
+    )
+
+
+def test_should_expand():
+
+    coordinator = StrategyCoordinator()
+
+    assert coordinator.should_expand(
+        money=12000,
+        available_land=3,
+    )
