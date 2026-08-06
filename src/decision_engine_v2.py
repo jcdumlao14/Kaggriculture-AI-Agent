@@ -28,7 +28,9 @@ from src.plan_executor import PlanExecutor
 from src.unified_action_evaluator import (
     UnifiedActionEvaluator,
 )
-
+from src.decision_replay_engine import (
+    DecisionReplayEngine,
+)
 
 class DecisionEngineV2:
     """
@@ -53,6 +55,7 @@ class DecisionEngineV2:
 
         # New unified evaluator
         self.evaluator = UnifiedActionEvaluator()
+        self.replay = DecisionReplayEngine()
 
     # ---------------------------------------------------------
 
@@ -170,6 +173,17 @@ class DecisionEngineV2:
                 best_score = score
                 best_action = action
 
+        if best_action is not None:
+
+            self.replay.record(
+                turn=observation.get(
+                    "turn",
+                    0,
+                ),
+                action=best_action["action"],
+                score=best_score,
+            )
+
         return best_action
 
     # ---------------------------------------------------------
@@ -206,3 +220,38 @@ class DecisionEngineV2:
             ),
             reverse=True,
         )
+
+    # ---------------------------------------------------------
+
+    def decision_history(
+        self,
+    ):
+        """
+        Return replay history.
+        """
+
+        return self.replay.history()
+
+
+    # ---------------------------------------------------------
+
+    def latest_decision(
+        self,
+    ):
+        """
+        Return the most recent decision.
+        """
+
+        return self.replay.latest()
+
+
+    # ---------------------------------------------------------
+
+    def clear_history(
+        self,
+    ):
+        """
+        Clear replay history.
+        """
+
+        self.replay.clear()

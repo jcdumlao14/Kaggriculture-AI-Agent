@@ -4,8 +4,8 @@ unified_action_evaluator.py
 Unified Action Evaluator for the Kaggriculture AI Agent.
 
 Combines action scoring, opportunity assessment,
-risk assessment, decision learning, and decision
-fusion into one evaluation pipeline.
+risk assessment, decision learning, adaptive strategy,
+and decision fusion into one evaluation pipeline.
 
 Author: Jocelyn C. Dumlao
 Project: Kaggriculture-AI-Agent
@@ -24,6 +24,9 @@ from src.risk_assessment_engine import (
 from src.decision_learning_engine import (
     DecisionLearningEngine,
 )
+from src.adaptive_strategy_engine import (
+    AdaptiveStrategyEngine,
+)
 
 
 class UnifiedActionEvaluator:
@@ -39,6 +42,7 @@ class UnifiedActionEvaluator:
         self.risk = RiskAssessmentEngine()
         self.fusion = DecisionFusionEngine()
         self.learning = DecisionLearningEngine()
+        self.strategy = AdaptiveStrategyEngine()
 
     # ---------------------------------------------------------
 
@@ -52,6 +56,7 @@ class UnifiedActionEvaluator:
         animal_profit: float = 0.0,
         market_score: float = 0.0,
         strategy_score: float = 0.0,
+        opponent_strategy: str = "UNKNOWN",
     ) -> float:
         """
         Return the final fused score for an action.
@@ -78,6 +83,11 @@ class UnifiedActionEvaluator:
             action,
         )
 
+        adaptive_bonus = self.strategy.adjustment(
+            action,
+            opponent_strategy,
+        )
+
         final_score = self.fusion.fuse(
             action_score=action_score,
             opportunity_score=opportunity_score,
@@ -87,7 +97,9 @@ class UnifiedActionEvaluator:
         )
 
         return float(
-            final_score + learning_bonus
+            final_score
+            + learning_bonus
+            + adaptive_bonus
         )
 
     # ---------------------------------------------------------
@@ -99,6 +111,7 @@ class UnifiedActionEvaluator:
         game_state: dict | None = None,
         market_score: float = 0.0,
         strategy_score: float = 0.0,
+        opponent_strategy: str = "UNKNOWN",
     ) -> dict:
         """
         Return the individual scoring components.
@@ -121,6 +134,11 @@ class UnifiedActionEvaluator:
             action,
         )
 
+        adaptive_bonus = self.strategy.adjustment(
+            action,
+            opponent_strategy,
+        )
+
         final_score = (
             self.fusion.fuse(
                 action_score=action_score,
@@ -130,6 +148,7 @@ class UnifiedActionEvaluator:
                 risk_score=risk_score,
             )
             + learning_bonus
+            + adaptive_bonus
         )
 
         return {
@@ -140,6 +159,7 @@ class UnifiedActionEvaluator:
             "market_score": float(market_score),
             "strategy_score": float(strategy_score),
             "learning_bonus": float(learning_bonus),
+            "adaptive_bonus": float(adaptive_bonus),
             "final_score": float(final_score),
         }
 
@@ -152,6 +172,7 @@ class UnifiedActionEvaluator:
         game_state: dict | None = None,
         market_score: float = 0.0,
         strategy_score: float = 0.0,
+        opponent_strategy: str = "UNKNOWN",
     ) -> list[tuple[str, float]]:
         """
         Rank actions from highest to lowest score.
@@ -163,6 +184,7 @@ class UnifiedActionEvaluator:
                 game_state=game_state,
                 market_score=market_score,
                 strategy_score=strategy_score,
+                opponent_strategy=opponent_strategy,
             )
             for action in actions
         }
@@ -180,6 +202,7 @@ class UnifiedActionEvaluator:
         game_state: dict | None = None,
         market_score: float = 0.0,
         strategy_score: float = 0.0,
+        opponent_strategy: str = "UNKNOWN",
     ) -> str | None:
         """
         Return the highest-scoring action.
@@ -193,6 +216,7 @@ class UnifiedActionEvaluator:
             game_state=game_state,
             market_score=market_score,
             strategy_score=strategy_score,
+            opponent_strategy=opponent_strategy,
         )
 
         return ranking[0][0]
