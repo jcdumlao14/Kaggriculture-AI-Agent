@@ -4,7 +4,7 @@ decision_engine_v2.py
 Decision Engine V2 for the Kaggriculture AI Agent.
 
 Selects the best legal action using the
-LegalActionGenerator and ActionScoringEngine.
+LegalActionGenerator and UnifiedActionEvaluator.
 
 Author: Jocelyn C. Dumlao
 Project: Kaggriculture-AI-Agent
@@ -21,6 +21,13 @@ from src.search_controller import SearchController
 from src.search_dispatcher import SearchDispatcher
 from src.game_phase_coordinator import GamePhaseCoordinator
 from src.market_decision_engine import MarketDecisionEngine
+from src.multi_turn_planner import MultiTurnPlanner
+from src.plan_evaluator import PlanEvaluator
+from src.plan_comparator import PlanComparator
+from src.plan_executor import PlanExecutor
+from src.unified_action_evaluator import (
+    UnifiedActionEvaluator,
+)
 
 
 class DecisionEngineV2:
@@ -30,7 +37,7 @@ class DecisionEngineV2:
 
     def __init__(self):
         self.generator = LegalActionGenerator()
-        self.scorer = ActionScoringEngine()
+        self.scorer = ActionScoringEngine()      # Keep for backward compatibility
         self.filter = RuleBasedActionFilter()
         self.parser = ObservationParser()
         self.adapter = GameStateAdapter()
@@ -38,6 +45,14 @@ class DecisionEngineV2:
         self.dispatcher = SearchDispatcher()
         self.phase = GamePhaseCoordinator()
         self.market_engine = MarketDecisionEngine()
+
+        self.multi_turn_planner = None
+        self.plan_evaluator = PlanEvaluator()
+        self.plan_comparator = PlanComparator()
+        self.plan_executor = PlanExecutor()
+
+        # New unified evaluator
+        self.evaluator = UnifiedActionEvaluator()
 
     # ---------------------------------------------------------
 
@@ -89,12 +104,10 @@ class DecisionEngineV2:
         Return the best legal action.
         """
 
-        # Normalize observation
         game_state = self.adapter.adapt(
             observation,
         )
 
-        # Current game phase
         game_phase = self.phase.game_phase(
             day=game_state.get(
                 "day",
@@ -106,15 +119,13 @@ class DecisionEngineV2:
             ),
         )
 
-        # Currently reserved for future phase-aware scoring
+        # Reserved for future phase-aware logic
         _ = game_phase
 
-        # Market evaluation
         market_score = self._market_score(
             game_state,
         )
 
-        # Select search algorithm
         algorithm = self.search_controller.select_algorithm(
             turn=observation.get(
                 "turn",
@@ -122,13 +133,11 @@ class DecisionEngineV2:
             ),
         )
 
-        # Dispatch search (future integration)
         _ = self.dispatcher.dispatch(
             algorithm,
             game_state,
         )
 
-        # Generate legal actions
         actions = self.filter.filter_actions(
             self.generator.generate(
                 observation,
@@ -144,10 +153,10 @@ class DecisionEngineV2:
 
         for action in actions:
 
-            score = self.scorer.score(
-                action=action["action"],
-                market_score=market_score,
+            score = self.evaluator.evaluate(
+                action["action"],
                 game_state=game_state,
+                market_score=market_score,
             )
 
             #
@@ -190,10 +199,10 @@ class DecisionEngineV2:
 
         return sorted(
             actions,
-            key=lambda action: self.scorer.score(
-                action=action["action"],
-                market_score=market_score,
+            key=lambda action: self.evaluator.evaluate(
+                action["action"],
                 game_state=game_state,
+                market_score=market_score,
             ),
             reverse=True,
         )

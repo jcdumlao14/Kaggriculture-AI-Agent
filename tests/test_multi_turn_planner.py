@@ -29,3 +29,31 @@ def test_next_task():
     task = planner.next_task()
 
     assert task["task"] == "HARVEST"
+
+def test_plan_length():
+
+    planner = MultiTurnPlanner(
+        FakePlanner()
+    )
+
+    assert planner.plan_length(3) == 3
+
+
+def test_has_plan():
+
+    planner = MultiTurnPlanner(
+        FakePlanner()
+    )
+
+    assert planner.has_plan()
+
+
+def test_all_tasks():
+
+    planner = MultiTurnPlanner(
+        FakePlanner()
+    )
+
+    tasks = planner.all_tasks()
+
+    assert len(tasks) == 4
