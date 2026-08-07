@@ -26,7 +26,13 @@ from src.decision_service_coordinator import (
 )
 
 
+from src.base_workflow_coordinator import (
+    BaseWorkflowCoordinator,
+)
+
+
 class DecisionWorkflowCoordinator:
+
     """
     Coordinate the complete decision workflow.
     """

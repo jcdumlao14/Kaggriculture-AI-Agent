@@ -31,6 +31,10 @@ from src.action_priority_engine import (
     ActionPriorityEngine,
 )
 
+from src.action_utility_engine import (
+    ActionUtilityEngine,
+)
+
 
 class UnifiedActionEvaluator:
     """
@@ -47,6 +51,7 @@ class UnifiedActionEvaluator:
         self.learning = DecisionLearningEngine()
         self.strategy = AdaptiveStrategyEngine()
         self.priority = ActionPriorityEngine()
+        self.utility = ActionUtilityEngine()
 
     # ---------------------------------------------------------
 
@@ -92,6 +97,12 @@ class UnifiedActionEvaluator:
             opponent_strategy,
         )
 
+        utility_bonus = self.utility.utility(
+            reward=max(action_score, 0.0),
+            probability=0.80,
+        )
+        
+
         final_score = self.fusion.fuse(
             action_score=action_score,
             opportunity_score=opportunity_score,
@@ -104,6 +115,7 @@ class UnifiedActionEvaluator:
             final_score
             + learning_bonus
             + adaptive_bonus
+            + (utility_bonus * 0.10)
         )
 
     # ---------------------------------------------------------
@@ -143,6 +155,11 @@ class UnifiedActionEvaluator:
             opponent_strategy,
         )
 
+        utility_bonus = self.utility.utility(
+            reward=max(action_score, 0.0),
+            probability=0.80,
+        )
+
         final_score = (
             self.fusion.fuse(
                 action_score=action_score,
@@ -153,6 +170,7 @@ class UnifiedActionEvaluator:
             )
             + learning_bonus
             + adaptive_bonus
+            + (utility_bonus * 0.10)
         )
 
         return {
