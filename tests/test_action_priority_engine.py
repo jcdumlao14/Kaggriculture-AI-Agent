@@ -65,3 +65,18 @@ def test_default_priority():
         engine.best_action(actions)["action"]
         == "PASS"
     )
+
+def test_highest_priority():
+
+    engine = ActionPriorityEngine()
+
+    actions = [
+        {"priority": 15},
+        {"priority": 40},
+        {"priority": 25},
+    ]
+
+    assert (
+        engine.highest_priority(actions)
+        == 40
+    )

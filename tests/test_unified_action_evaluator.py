@@ -112,3 +112,4 @@ def test_learning_affects_score():
     )
 
     assert after > before
+

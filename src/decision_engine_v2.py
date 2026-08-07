@@ -32,6 +32,11 @@ from src.decision_replay_engine import (
     DecisionReplayEngine,
 )
 
+from src.action_priority_engine import (
+    ActionPriorityEngine,
+)
+from src.turn_memory_engine import TurnMemoryEngine
+
 class DecisionEngineV2:
     """
     Chooses the highest-scoring legal action.
@@ -56,6 +61,8 @@ class DecisionEngineV2:
         # New unified evaluator
         self.evaluator = UnifiedActionEvaluator()
         self.replay = DecisionReplayEngine()
+        self.priority_engine = ActionPriorityEngine()
+        self.memory = TurnMemoryEngine()
 
     # ---------------------------------------------------------
 
@@ -186,6 +193,46 @@ class DecisionEngineV2:
 
         return best_action
 
+
+        scored_actions = []
+
+        for action in actions:
+
+            score = self.evaluator.evaluate(
+            action["action"],
+            game_state=game_state,
+            market_score=market_score,
+        )
+
+        scored_actions.append(
+            {
+                **action,
+                "priority": score,
+            }
+        )
+
+        best_action = self.priority_engine.best_action(
+            scored_actions,
+        )
+
+        if best_action is not None:
+
+            self.memory.remember(
+            "last_action",
+            best_action["action"],
+        )
+
+        self.replay.record(
+            turn=observation.get(
+                "turn",
+                0,
+            ),
+            action=best_action["action"],
+            score=best_action["priority"],
+        )
+
+        return best_action  
+
     # ---------------------------------------------------------
 
     def choose_actions(
@@ -211,14 +258,25 @@ class DecisionEngineV2:
             observation,
         )
 
-        return sorted(
-            actions,
-            key=lambda action: self.evaluator.evaluate(
+        scored_actions = []
+
+        for action in actions:
+
+            score = self.evaluator.evaluate(
                 action["action"],
                 game_state=game_state,
                 market_score=market_score,
-            ),
-            reverse=True,
+            )
+
+            scored_actions.append(
+                {
+                    **action,
+                    "priority": score,
+                }
+            )
+
+        return self.priority_engine.rank(
+            scored_actions,
         )
 
     # ---------------------------------------------------------
@@ -255,3 +313,16 @@ class DecisionEngineV2:
         """
 
         self.replay.clear()
+
+    # ---------------------------------------------------------
+
+    def last_action(
+        self,
+    ):
+        """
+        Return the previously selected action.
+        """
+
+        return self.memory.recall(
+            "last_action",
+    )

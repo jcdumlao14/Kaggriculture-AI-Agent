@@ -68,3 +68,24 @@ class ActionPriorityEngine:
             action.get("priority", 0)
             for action in self.rank(actions)
         ]
+
+    # ---------------------------------------------------------
+
+    def highest_priority(
+        self,
+        actions: list[dict],
+    ) -> int:
+        """
+        Return the highest priority value.
+        """
+
+        if not actions:
+            return 0
+
+        return max(
+            action.get(
+                "priority",
+                0,
+            )
+            for action in actions
+        )

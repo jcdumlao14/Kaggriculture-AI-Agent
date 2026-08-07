@@ -27,6 +27,9 @@ from src.decision_learning_engine import (
 from src.adaptive_strategy_engine import (
     AdaptiveStrategyEngine,
 )
+from src.action_priority_engine import (
+    ActionPriorityEngine,
+)
 
 
 class UnifiedActionEvaluator:
@@ -43,6 +46,7 @@ class UnifiedActionEvaluator:
         self.fusion = DecisionFusionEngine()
         self.learning = DecisionLearningEngine()
         self.strategy = AdaptiveStrategyEngine()
+        self.priority = ActionPriorityEngine()
 
     # ---------------------------------------------------------
 
